@@ -1,19 +1,19 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  // Инициализация движка Flutter перед асинхронными вызовами
+  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РґРІРёР¶РєР° Flutter РїРµСЂРµРґ Р°СЃРёРЅС…СЂРѕРЅРЅС‹РјРё РІС‹Р·РѕРІР°РјРё
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const SmartCalcApp());
+  runApp(const shadrinkalkApp());
 }
 
-class SmartCalcApp extends StatelessWidget {
-  const SmartCalcApp({super.key});
+class shadrinkalkApp extends StatelessWidget {
+  const shadrinkalkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SmartCalc',
+      title: 'shadrinkalk',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF121212),
@@ -29,7 +29,7 @@ class SmartCalcApp extends StatelessWidget {
 }
 
 // ============================================================================
-// ГЛАВНЫЙ ЭКРАН С НАВИГАЦИЕЙ, ЖИЗНЕННЫМ ЦИКЛОМ И SHAREDPREFERENCES
+// Р“Р›РђР’РќР«Р™ Р­РљР РђРќ РЎ РќРђР’РР“РђР¦РР•Р™, Р–РР—РќР•РќРќР«Рњ Р¦РРљР›РћРњ Р SHAREDPREFERENCES
 // ============================================================================
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -51,30 +51,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   @override
   void initState() {
     super.initState();
-    // Регистрация наблюдателя системного жизненного цикла приложения
+    // Р РµРіРёСЃС‚СЂР°С†РёСЏ РЅР°Р±Р»СЋРґР°С‚РµР»СЏ СЃРёСЃС‚РµРјРЅРѕРіРѕ Р¶РёР·РЅРµРЅРЅРѕРіРѕ С†РёРєР»Р° РїСЂРёР»РѕР¶РµРЅРёСЏ
     WidgetsBinding.instance.addObserver(this);
-    // Восстановление сохраненного состояния из памяти
+    // Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ СЃРѕС…СЂР°РЅРµРЅРЅРѕРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РёР· РїР°РјСЏС‚Рё
     _loadState();
   }
 
   @override
   void dispose() {
-    // Удаление наблюдателя при завершении работы экрана
+    // РЈРґР°Р»РµРЅРёРµ РЅР°Р±Р»СЋРґР°С‚РµР»СЏ РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё СЂР°Р±РѕС‚С‹ СЌРєСЂР°РЅР°
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  // --- Отслеживание жизненного цикла (WidgetsBindingObserver) ---
+  // --- РћС‚СЃР»РµР¶РёРІР°РЅРёРµ Р¶РёР·РЅРµРЅРЅРѕРіРѕ С†РёРєР»Р° (WidgetsBindingObserver) ---
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // При сворачивании приложения сохраняем активный экран в хранилище
+    // РџСЂРё СЃРІРѕСЂР°С‡РёРІР°РЅРёРё РїСЂРёР»РѕР¶РµРЅРёСЏ СЃРѕС…СЂР°РЅСЏРµРј Р°РєС‚РёРІРЅС‹Р№ СЌРєСЂР°РЅ РІ С…СЂР°РЅРёР»РёС‰Рµ
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _saveState();
     }
   }
 
-  // --- Сохранение и загрузка данных (SharedPreferences) ---
+  // --- РЎРѕС…СЂР°РЅРµРЅРёРµ Рё Р·Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С… (SharedPreferences) ---
   Future<void> _saveState() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('active_screen_index', _currentIndex);
@@ -89,7 +89,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     }
   }
 
-  // --- Навигационная панель (BottomNavigationBar) ---
+  // --- РќР°РІРёРіР°С†РёРѕРЅРЅР°СЏ РїР°РЅРµР»СЊ (BottomNavigationBar) ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,15 +113,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.calculate),
-            label: 'Калькулятор',
+            label: 'РљР°Р»СЊРєСѓР»СЏС‚РѕСЂ',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.percent),
-            label: 'Скидки',
+            label: 'РЎРєРёРґРєРё',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.swap_horiz),
-            label: 'Конвертер',
+            label: 'РљРѕРЅРІРµСЂС‚РµСЂ',
           ),
         ],
       ),
@@ -130,7 +130,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
 }
 
 // ============================================================================
-// 1. ЭКРАН: КАЛЬКУЛЯТОР
+// 1. Р­РљР РђРќ: РљРђР›Р¬РљРЈР›РЇРўРћР 
 // ============================================================================
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -152,12 +152,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _currentNumber = "";
         _num1 = 0;
         _operand = "";
-      } else if (buttonText == "⌫") {
+      } else if (buttonText == "вЊ«") {
         if (_currentNumber.isNotEmpty) {
           _currentNumber = _currentNumber.substring(0, _currentNumber.length - 1);
           _output = _currentNumber.isEmpty ? "0" : _currentNumber;
         }
-      } else if (buttonText == "+" || buttonText == "-" || buttonText == "×" || buttonText == "÷") {
+      } else if (buttonText == "+" || buttonText == "-" || buttonText == "Г—" || buttonText == "Г·") {
         if (_currentNumber.isNotEmpty) {
           _num1 = double.tryParse(_currentNumber) ?? 0;
           _operand = buttonText;
@@ -174,8 +174,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           double res = 0;
           if (_operand == "+") res = _num1 + num2;
           if (_operand == "-") res = _num1 - num2;
-          if (_operand == "×") res = _num1 * num2;
-          if (_operand == "÷") res = num2 != 0 ? _num1 / num2 : 0;
+          if (_operand == "Г—") res = _num1 * num2;
+          if (_operand == "Г·") res = num2 != 0 ? _num1 / num2 : 0;
 
           _output = res % 1 == 0 ? res.toInt().toString() : res.toStringAsFixed(2);
           _currentNumber = _output;
@@ -214,7 +214,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       children: [
         const SizedBox(height: 16),
         const Text(
-          "Калькулятор",
+          "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂ",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         Expanded(
@@ -235,8 +235,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               Row(
                 children: [
                   _buildButton("C", color: const Color(0xFF8B2525)),
-                  _buildButton("⌫", color: const Color(0xFF384654)),
-                  _buildButton("÷", color: const Color(0xFF2E3D6E)),
+                  _buildButton("вЊ«", color: const Color(0xFF384654)),
+                  _buildButton("Г·", color: const Color(0xFF2E3D6E)),
                 ],
               ),
               Row(
@@ -244,7 +244,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   _buildButton("7"),
                   _buildButton("8"),
                   _buildButton("9"),
-                  _buildButton("×", color: const Color(0xFF2E3D6E)),
+                  _buildButton("Г—", color: const Color(0xFF2E3D6E)),
                 ],
               ),
               Row(
@@ -280,7 +280,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 }
 
 // ============================================================================
-// 2. ЭКРАН: СКИДКИ И НАЛОГИ
+// 2. Р­РљР РђРќ: РЎРљРР”РљР Р РќРђР›РћР“Р
 // ============================================================================
 class DiscountScreen extends StatefulWidget {
   const DiscountScreen({super.key});
@@ -319,7 +319,7 @@ class _DiscountScreenState extends State<DiscountScreen> {
           children: [
             const SizedBox(height: 10),
             const Text(
-              "Скидки и налоги",
+              "РЎРєРёРґРєРё Рё РЅР°Р»РѕРіРё",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 30),
@@ -328,7 +328,7 @@ class _DiscountScreenState extends State<DiscountScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(color: Colors.white, fontSize: 18),
               decoration: InputDecoration(
-                labelText: "Исходная цена (руб)",
+                labelText: "РСЃС…РѕРґРЅР°СЏ С†РµРЅР° (СЂСѓР±)",
                 prefixIcon: const Icon(Icons.attach_money, color: Colors.white70),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -338,7 +338,7 @@ class _DiscountScreenState extends State<DiscountScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Процент скидки:", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                const Text("РџСЂРѕС†РµРЅС‚ СЃРєРёРґРєРё:", style: TextStyle(color: Colors.white70, fontSize: 16)),
                 Text(
                   "${_discountPercent.toInt()}%",
                   style: const TextStyle(color: Colors.indigoAccent, fontSize: 18, fontWeight: FontWeight.bold),
@@ -369,9 +369,9 @@ class _DiscountScreenState extends State<DiscountScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Экономия:", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                      const Text("Р­РєРѕРЅРѕРјРёСЏ:", style: TextStyle(color: Colors.white70, fontSize: 16)),
                       Text(
-                        "${_savings.toStringAsFixed(2)} ₽",
+                        "${_savings.toStringAsFixed(2)} в‚Ѕ",
                         style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -380,9 +380,9 @@ class _DiscountScreenState extends State<DiscountScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Итоговая цена:", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text("РС‚РѕРіРѕРІР°СЏ С†РµРЅР°:", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(
-                        "${_finalPrice.toStringAsFixed(2)} ₽",
+                        "${_finalPrice.toStringAsFixed(2)} в‚Ѕ",
                         style: const TextStyle(color: Color(0xFFFFD54F), fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -398,7 +398,7 @@ class _DiscountScreenState extends State<DiscountScreen> {
 }
 
 // ============================================================================
-// 3. ЭКРАН: КОНВЕРТЕР ВЕЛИЧИН
+// 3. Р­РљР РђРќ: РљРћРќР’Р•Р РўР•Р  Р’Р•Р›РР§РРќ
 // ============================================================================
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({super.key});
@@ -409,14 +409,14 @@ class ConverterScreen extends StatefulWidget {
 
 class _ConverterScreenState extends State<ConverterScreen> {
   final TextEditingController _valController = TextEditingController();
-  String _conversionType = "Длина: метры → километры";
+  String _conversionType = "Р”Р»РёРЅР°: РјРµС‚СЂС‹ в†’ РєРёР»РѕРјРµС‚СЂС‹";
   String _result = "0.000";
 
   final List<String> _types = const [
-    "Длина: метры → километры",
-    "Длина: километры → мили",
-    "Масса: килограммы → фунты",
-    "Температура: °C → °F",
+    "Р”Р»РёРЅР°: РјРµС‚СЂС‹ в†’ РєРёР»РѕРјРµС‚СЂС‹",
+    "Р”Р»РёРЅР°: РєРёР»РѕРјРµС‚СЂС‹ в†’ РјРёР»Рё",
+    "РњР°СЃСЃР°: РєРёР»РѕРіСЂР°РјРјС‹ в†’ С„СѓРЅС‚С‹",
+    "РўРµРјРїРµСЂР°С‚СѓСЂР°: В°C в†’ В°F",
   ];
 
   void _convert() {
@@ -424,16 +424,16 @@ class _ConverterScreenState extends State<ConverterScreen> {
     double res = 0;
 
     switch (_conversionType) {
-      case "Длина: метры → километры":
+      case "Р”Р»РёРЅР°: РјРµС‚СЂС‹ в†’ РєРёР»РѕРјРµС‚СЂС‹":
         res = val / 1000;
         break;
-      case "Длина: километры → мили":
+      case "Р”Р»РёРЅР°: РєРёР»РѕРјРµС‚СЂС‹ в†’ РјРёР»Рё":
         res = val * 0.621371;
         break;
-      case "Масса: килограммы → фунты":
+      case "РњР°СЃСЃР°: РєРёР»РѕРіСЂР°РјРјС‹ в†’ С„СѓРЅС‚С‹":
         res = val * 2.20462;
         break;
-      case "Температура: °C → °F":
+      case "РўРµРјРїРµСЂР°С‚СѓСЂР°: В°C в†’ В°F":
         res = (val * 9 / 5) + 32;
         break;
     }
@@ -459,7 +459,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
           children: [
             const SizedBox(height: 10),
             const Text(
-              "Конвертер величин",
+              "РљРѕРЅРІРµСЂС‚РµСЂ РІРµР»РёС‡РёРЅ",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 30),
@@ -469,7 +469,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
               style: const TextStyle(color: Colors.white, fontSize: 16),
               dropdownColor: const Color(0xFF1E1E1E),
               decoration: InputDecoration(
-                labelText: "Тип конвертации",
+                labelText: "РўРёРї РєРѕРЅРІРµСЂС‚Р°С†РёРё",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
@@ -486,7 +486,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(color: Colors.white, fontSize: 18),
               decoration: InputDecoration(
-                labelText: "Значение для перевода",
+                labelText: "Р—РЅР°С‡РµРЅРёРµ РґР»СЏ РїРµСЂРµРІРѕРґР°",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onChanged: (_) => _convert(),
@@ -502,7 +502,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Результат: ", style: TextStyle(color: Colors.white70, fontSize: 18)),
+                  const Text("Р РµР·СѓР»СЊС‚Р°С‚: ", style: TextStyle(color: Colors.white70, fontSize: 18)),
                   Text(
                     _result,
                     style: const TextStyle(color: Color(0xFF5C8DFF), fontSize: 22, fontWeight: FontWeight.bold),
