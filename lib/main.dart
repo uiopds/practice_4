@@ -2,47 +2,84 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
-  // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РґРІРёР¶РєР° Flutter РїРµСЂРµРґ Р°СЃРёРЅС…СЂРѕРЅРЅС‹РјРё РІС‹Р·РѕРІР°РјРё
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const shadrinkalkApp());
+  final prefs = await SharedPreferences.getInstance();
+  final savedDark = prefs.getBool('is_dark_mode') ?? false;
+  runApp(ShadrinkalkApp(initialDarkMode: savedDark));
 }
 
-class shadrinkalkApp extends StatelessWidget {
-  const shadrinkalkApp({super.key});
+class ShadrinkalkApp extends StatefulWidget {
+  final bool initialDarkMode;
+
+  const ShadrinkalkApp({super.key, required this.initialDarkMode});
+
+  @override
+  State<ShadrinkalkApp> createState() => _ShadrinkalkAppState();
+}
+
+class _ShadrinkalkAppState extends State<ShadrinkalkApp> {
+  late bool _isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDarkMode = widget.initialDarkMode;
+  }
+
+  Future<void> _toggleTheme() async {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_dark_mode', _isDarkMode);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'shadrinkalk',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.deepPurpleAccent,
-          secondary: Colors.amber,
-          surface: Color(0xFF1E1E1E),
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2563EB),
+          brightness: Brightness.light,
         ),
       ),
-      home: const MainNavigationScreen(),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2563EB),
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: HomeScreen(
+        isDarkMode: _isDarkMode,
+        onToggleTheme: _toggleTheme,
+      ),
     );
   }
 }
 
-// ============================================================================
-// Р“Р›РђР’РќР«Р™ Р­РљР РђРќ РЎ РќРђР’РР“РђР¦РР•Р™, Р–РР—РќР•РќРќР«Рњ Р¦РРљР›РћРњ Р SHAREDPREFERENCES
-// ============================================================================
-class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
+
+  const HomeScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+  });
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen>
-    with WidgetsBindingObserver {
-  int _currentIndex = 0;
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+  int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
+  static const List<Widget> _pages = [
     CalculatorScreen(),
     DiscountScreen(),
     ConverterScreen(),
@@ -51,77 +88,85 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   @override
   void initState() {
     super.initState();
-    // Р РµРіРёСЃС‚СЂР°С†РёСЏ РЅР°Р±Р»СЋРґР°С‚РµР»СЏ СЃРёСЃС‚РµРјРЅРѕРіРѕ Р¶РёР·РЅРµРЅРЅРѕРіРѕ С†РёРєР»Р° РїСЂРёР»РѕР¶РµРЅРёСЏ
     WidgetsBinding.instance.addObserver(this);
-    // Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёРµ СЃРѕС…СЂР°РЅРµРЅРЅРѕРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РёР· РїР°РјСЏС‚Рё
-    _loadState();
+    debugPrint('--> HomeScreen: initState (Главный экран создан)');
+    _loadSavedTab();
   }
 
-  @override
-  void dispose() {
-    // РЈРґР°Р»РµРЅРёРµ РЅР°Р±Р»СЋРґР°С‚РµР»СЏ РїСЂРё Р·Р°РІРµСЂС€РµРЅРёРё СЂР°Р±РѕС‚С‹ СЌРєСЂР°РЅР°
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  // --- РћС‚СЃР»РµР¶РёРІР°РЅРёРµ Р¶РёР·РЅРµРЅРЅРѕРіРѕ С†РёРєР»Р° (WidgetsBindingObserver) ---
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    // РџСЂРё СЃРІРѕСЂР°С‡РёРІР°РЅРёРё РїСЂРёР»РѕР¶РµРЅРёСЏ СЃРѕС…СЂР°РЅСЏРµРј Р°РєС‚РёРІРЅС‹Р№ СЌРєСЂР°РЅ РІ С…СЂР°РЅРёР»РёС‰Рµ
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _saveState();
-    }
-  }
-
-  // --- РЎРѕС…СЂР°РЅРµРЅРёРµ Рё Р·Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С… (SharedPreferences) ---
-  Future<void> _saveState() async {
+  Future<void> _loadSavedTab() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('active_screen_index', _currentIndex);
-  }
-
-  Future<void> _loadState() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
+    final savedIndex = prefs.getInt('selected_tab') ?? 0;
+    if (mounted && savedIndex >= 0 && savedIndex < _pages.length) {
       setState(() {
-        _currentIndex = prefs.getInt('active_screen_index') ?? 0;
+        _selectedIndex = savedIndex;
       });
     }
   }
 
-  // --- РќР°РІРёРіР°С†РёРѕРЅРЅР°СЏ РїР°РЅРµР»СЊ (BottomNavigationBar) ---
+  Future<void> _onTabTapped(int index) async {
+    setState(() {
+      _selectedIndex = index;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selected_tab', index);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    debugPrint('--> Жизненный цикл приложения: $state');
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    debugPrint('--> HomeScreen: dispose (Экран уничтожен)');
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: _screens,
+      appBar: AppBar(
+        title: const Text(
+          'shadrinkalk',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            onPressed: widget.onToggleTheme,
+            tooltip: widget.isDarkMode
+                ? 'Включить светлую тему'
+                : 'Включить тёмную тему',
+            icon: Icon(
+              widget.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          _saveState();
-        },
-        backgroundColor: const Color(0xFF1E1E1E),
-        selectedItemColor: Colors.deepPurpleAccent,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calculate),
-            label: 'РљР°Р»СЊРєСѓР»СЏС‚РѕСЂ',
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onTabTapped,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.calculate_outlined),
+            selectedIcon: Icon(Icons.calculate),
+            label: 'Калькулятор',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.percent),
-            label: 'РЎРєРёРґРєРё',
+          NavigationDestination(
+            icon: Icon(Icons.percent_outlined),
+            selectedIcon: Icon(Icons.percent),
+            label: 'Скидки',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.swap_horiz),
-            label: 'РљРѕРЅРІРµСЂС‚РµСЂ',
+          NavigationDestination(
+            icon: Icon(Icons.swap_horiz_outlined),
+            selectedIcon: Icon(Icons.swap_horiz),
+            label: 'Конвертер',
           ),
         ],
       ),
@@ -129,9 +174,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   }
 }
 
-// ============================================================================
-// 1. Р­РљР РђРќ: РљРђР›Р¬РљРЈР›РЇРўРћР 
-// ============================================================================
+// ==================== 1. КАЛЬКУЛЯТОР ====================
+
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
 
@@ -140,148 +184,259 @@ class CalculatorScreen extends StatefulWidget {
 }
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
-  String _output = "0";
-  String _currentNumber = "";
-  double _num1 = 0;
-  String _operand = "";
+  String _display = '0';
+  String _history = '';
+  double? _firstOperand;
+  String? _operator;
+  bool _shouldResetDisplay = false;
 
-  void _buttonPressed(String buttonText) {
+  void _onButtonPressed(String label) {
     setState(() {
-      if (buttonText == "C") {
-        _output = "0";
-        _currentNumber = "";
-        _num1 = 0;
-        _operand = "";
-      } else if (buttonText == "вЊ«") {
-        if (_currentNumber.isNotEmpty) {
-          _currentNumber = _currentNumber.substring(0, _currentNumber.length - 1);
-          _output = _currentNumber.isEmpty ? "0" : _currentNumber;
-        }
-      } else if (buttonText == "+" || buttonText == "-" || buttonText == "Г—" || buttonText == "Г·") {
-        if (_currentNumber.isNotEmpty) {
-          _num1 = double.tryParse(_currentNumber) ?? 0;
-          _operand = buttonText;
-          _currentNumber = "";
-        }
-      } else if (buttonText == ".") {
-        if (!_currentNumber.contains(".")) {
-          _currentNumber = _currentNumber.isEmpty ? "0." : _currentNumber + ".";
-          _output = _currentNumber;
-        }
-      } else if (buttonText == "=") {
-        if (_operand.isNotEmpty && _currentNumber.isNotEmpty) {
-          double num2 = double.tryParse(_currentNumber) ?? 0;
-          double res = 0;
-          if (_operand == "+") res = _num1 + num2;
-          if (_operand == "-") res = _num1 - num2;
-          if (_operand == "Г—") res = _num1 * num2;
-          if (_operand == "Г·") res = num2 != 0 ? _num1 / num2 : 0;
+      if (label == 'C') {
+        _display = '0';
+        _history = '';
+        _firstOperand = null;
+        _operator = null;
+        _shouldResetDisplay = false;
+        return;
+      }
 
-          _output = res % 1 == 0 ? res.toInt().toString() : res.toStringAsFixed(2);
-          _currentNumber = _output;
-          _operand = "";
+      if (label == '⌫') {
+        if (_display == 'Ошибка' || _shouldResetDisplay) {
+          _display = '0';
+          _shouldResetDisplay = false;
+          return;
         }
-      } else {
-        _currentNumber += buttonText;
-        _output = _currentNumber;
+        if (_display.length > 1) {
+          _display = _display.substring(0, _display.length - 1);
+          if (_display == '-') _display = '0';
+        } else {
+          _display = '0';
+        }
+        return;
+      }
+
+      if (label == '%') {
+        final value = double.tryParse(_display);
+        if (value != null) {
+          _display = _formatNumber(value / 100);
+        }
+        return;
+      }
+
+      if (['+', '-', '×', '÷'].contains(label)) {
+        final current = double.tryParse(_display);
+        if (current == null) return;
+
+        if (_firstOperand != null && _operator != null && !_shouldResetDisplay) {
+          final result = _calculate(_firstOperand!, current, _operator!);
+          if (result == null) {
+            _display = 'Ошибка';
+            _history = '';
+            _firstOperand = null;
+            _operator = null;
+            _shouldResetDisplay = true;
+            return;
+          }
+          _firstOperand = result;
+          _display = _formatNumber(result);
+        } else {
+          _firstOperand = current;
+        }
+
+        _operator = label;
+        _history = '${_formatNumber(_firstOperand!)} $label';
+        _shouldResetDisplay = true;
+        return;
+      }
+
+      if (label == '=') {
+        if (_firstOperand == null || _operator == null) return;
+        final secondOperand = double.tryParse(_display);
+        if (secondOperand == null) return;
+
+        final result = _calculate(_firstOperand!, secondOperand, _operator!);
+        _history =
+            '${_formatNumber(_firstOperand!)} $_operator ${_formatNumber(secondOperand)} =';
+
+        if (result == null) {
+          _display = 'Ошибка';
+        } else {
+          _display = _formatNumber(result);
+        }
+
+        _firstOperand = null;
+        _operator = null;
+        _shouldResetDisplay = true;
+        return;
+      }
+
+      // Цифры и точка
+      if (_display == 'Ошибка' || _shouldResetDisplay) {
+        _display = (label == '.') ? '0.' : label;
+        _shouldResetDisplay = false;
+        return;
+      }
+
+      if (label == '.') {
+        if (!_display.contains('.')) {
+          _display += '.';
+        }
+        return;
+      }
+
+      if (_display == '0') {
+        _display = label;
+      } else if (_display.length < 15) {
+        _display += label;
       }
     });
   }
 
-  Widget _buildButton(String text, {Color? color, Color textColor = Colors.white}) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color ?? const Color(0xFF2C2C2C),
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          onPressed: () => _buttonPressed(text),
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textColor),
-          ),
-        ),
-      ),
-    );
+  double? _calculate(double a, double b, String op) {
+    switch (op) {
+      case '+':
+        return a + b;
+      case '-':
+        return a - b;
+      case '×':
+        return a * b;
+      case '÷':
+        if (b == 0) return null;
+        return a / b;
+      default:
+        return b;
+    }
+  }
+
+  String _formatNumber(double value) {
+    if (value.isInfinite || value.isNaN) return 'Ошибка';
+    if (value == value.roundToDouble() && value.abs() < 1e12) {
+      return value.toInt().toString();
+    }
+    return double.parse(value.toStringAsFixed(8)).toString();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        const Text(
-          "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂ",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        Expanded(
-          child: Container(
-            alignment: Alignment.bottomRight,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Text(
-              _output,
-              style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold, color: Colors.white),
-              maxLines: 1,
+    final colors = Theme.of(context).colorScheme;
+    final buttons = [
+      ['C', '⌫', '%', '÷'],
+      ['7', '8', '9', '×'],
+      ['4', '5', '6', '-'],
+      ['1', '2', '3', '+'],
+      ['0', '.', '='],
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Дисплей
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  _history,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    _display,
+                    style: TextStyle(
+                      fontSize: 44,
+                      fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  _buildButton("C", color: const Color(0xFF8B2525)),
-                  _buildButton("вЊ«", color: const Color(0xFF384654)),
-                  _buildButton("Г·", color: const Color(0xFF2E3D6E)),
-                ],
-              ),
-              Row(
-                children: [
-                  _buildButton("7"),
-                  _buildButton("8"),
-                  _buildButton("9"),
-                  _buildButton("Г—", color: const Color(0xFF2E3D6E)),
-                ],
-              ),
-              Row(
-                children: [
-                  _buildButton("4"),
-                  _buildButton("5"),
-                  _buildButton("6"),
-                  _buildButton("-", color: const Color(0xFF2E3D6E)),
-                ],
-              ),
-              Row(
-                children: [
-                  _buildButton("1"),
-                  _buildButton("2"),
-                  _buildButton("3"),
-                  _buildButton("+", color: const Color(0xFF2E3D6E)),
-                ],
-              ),
-              Row(
-                children: [
-                  _buildButton("0"),
-                  _buildButton("."),
-                  _buildButton("=", color: const Color(0xFF2E7D32)),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
+          const SizedBox(height: 16),
+          // Сетка кнопок
+          Expanded(
+            child: Column(
+              children: buttons.map((row) {
+                return Expanded(
+                  child: Row(
+                    children: row.map((label) {
+                      final isEqual = label == '=';
+                      final isClear = label == 'C';
+                      final isOp = ['÷', '×', '-', '+', '%', '⌫'].contains(label);
+
+                      Color bgColor;
+                      Color fgColor;
+
+                      if (isEqual) {
+                        bgColor = colors.primary;
+                        fgColor = colors.onPrimary;
+                      } else if (isClear) {
+                        bgColor = colors.errorContainer;
+                        fgColor = colors.onErrorContainer;
+                      } else if (isOp) {
+                        bgColor = colors.secondaryContainer;
+                        fgColor = colors.onSecondaryContainer;
+                      } else {
+                        bgColor = colors.surfaceContainerLow;
+                        fgColor = colors.onSurface;
+                      }
+
+                      return Expanded(
+                        flex: label == '0' ? 2 : 1,
+                        child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: SizedBox.expand(
+                            child: FilledButton.tonal(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: bgColor,
+                                foregroundColor: fgColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                padding: EdgeInsets.zero,
+                              ),
+                              onPressed: () => _onButtonPressed(label),
+                              child: Text(
+                                label,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// ============================================================================
-// 2. Р­РљР РђРќ: РЎРљРР”РљР Р РќРђР›РћР“Р
-// ============================================================================
+// ==================== 2. РАСЧЁТ СКИДОК ====================
+
 class DiscountScreen extends StatefulWidget {
   const DiscountScreen({super.key});
 
@@ -291,17 +446,7 @@ class DiscountScreen extends StatefulWidget {
 
 class _DiscountScreenState extends State<DiscountScreen> {
   final TextEditingController _priceController = TextEditingController();
-  double _discountPercent = 10;
-  double _savings = 0;
-  double _finalPrice = 0;
-
-  void _calculate() {
-    double price = double.tryParse(_priceController.text) ?? 0;
-    setState(() {
-      _savings = price * (_discountPercent / 100);
-      _finalPrice = price - _savings;
-    });
-  }
+  double _discountPercent = 15;
 
   @override
   void dispose() {
@@ -311,95 +456,124 @@ class _DiscountScreenState extends State<DiscountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            const Text(
-              "РЎРєРёРґРєРё Рё РЅР°Р»РѕРіРё",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 30),
-            TextField(
-              controller: _priceController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              decoration: InputDecoration(
-                labelText: "РСЃС…РѕРґРЅР°СЏ С†РµРЅР° (СЂСѓР±)",
-                prefixIcon: const Icon(Icons.attach_money, color: Colors.white70),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onChanged: (_) => _calculate(),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("РџСЂРѕС†РµРЅС‚ СЃРєРёРґРєРё:", style: TextStyle(color: Colors.white70, fontSize: 16)),
-                Text(
-                  "${_discountPercent.toInt()}%",
-                  style: const TextStyle(color: Colors.indigoAccent, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            Slider(
-              value: _discountPercent,
-              min: 0,
-              max: 100,
-              divisions: 100,
-              activeColor: Colors.indigoAccent,
-              onChanged: (val) {
-                setState(() => _discountPercent = val);
-                _calculate();
-              },
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E212B),
+    final colors = Theme.of(context).colorScheme;
+    final rawText = _priceController.text.replaceAll(',', '.');
+    final price = double.tryParse(rawText) ?? 0.0;
+    final saved = price * (_discountPercent / 100);
+    final finalPrice = price - saved;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _priceController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: 'Исходная цена (₽)',
+              hintText: 'Например: 2500',
+              prefixIcon: const Icon(Icons.payments_outlined),
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Размер скидки:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              Text(
+                '${_discountPercent.round()}%',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colors.primary,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: _discountPercent,
+            min: 0,
+            max: 90,
+            divisions: 18,
+            label: '${_discountPercent.round()}%',
+            onChanged: (value) {
+              setState(() {
+                _discountPercent = value;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          Card(
+            elevation: 0,
+            color: colors.secondaryContainer,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Р­РєРѕРЅРѕРјРёСЏ:", style: TextStyle(color: Colors.white70, fontSize: 16)),
                       Text(
-                        "${_savings.toStringAsFixed(2)} в‚Ѕ",
-                        style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 18, fontWeight: FontWeight.bold),
+                        'Итоговая цена:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: colors.onSecondaryContainer,
+                        ),
+                      ),
+                      Text(
+                        '${finalPrice.toStringAsFixed(2)} ₽',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: colors.onSecondaryContainer,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("РС‚РѕРіРѕРІР°СЏ С†РµРЅР°:", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(
-                        "${_finalPrice.toStringAsFixed(2)} в‚Ѕ",
-                        style: const TextStyle(color: Color(0xFFFFD54F), fontSize: 20, fontWeight: FontWeight.bold),
+                        'Ваша экономия:',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: colors.onSecondaryContainer,
+                        ),
+                      ),
+                      Text(
+                        '${saved.toStringAsFixed(2)} ₽',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: colors.primary,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ============================================================================
-// 3. Р­РљР РђРќ: РљРћРќР’Р•Р РўР•Р  Р’Р•Р›РР§РРќ
-// ============================================================================
+// ==================== 3. КОНВЕРТЕР ВЕЛИЧИН ====================
+
 class ConverterScreen extends StatefulWidget {
   const ConverterScreen({super.key});
 
@@ -408,110 +582,127 @@ class ConverterScreen extends StatefulWidget {
 }
 
 class _ConverterScreenState extends State<ConverterScreen> {
-  final TextEditingController _valController = TextEditingController();
-  String _conversionType = "Р”Р»РёРЅР°: РјРµС‚СЂС‹ в†’ РєРёР»РѕРјРµС‚СЂС‹";
-  String _result = "0.000";
-
-  final List<String> _types = const [
-    "Р”Р»РёРЅР°: РјРµС‚СЂС‹ в†’ РєРёР»РѕРјРµС‚СЂС‹",
-    "Р”Р»РёРЅР°: РєРёР»РѕРјРµС‚СЂС‹ в†’ РјРёР»Рё",
-    "РњР°СЃСЃР°: РєРёР»РѕРіСЂР°РјРјС‹ в†’ С„СѓРЅС‚С‹",
-    "РўРµРјРїРµСЂР°С‚СѓСЂР°: В°C в†’ В°F",
-  ];
-
-  void _convert() {
-    double val = double.tryParse(_valController.text) ?? 0;
-    double res = 0;
-
-    switch (_conversionType) {
-      case "Р”Р»РёРЅР°: РјРµС‚СЂС‹ в†’ РєРёР»РѕРјРµС‚СЂС‹":
-        res = val / 1000;
-        break;
-      case "Р”Р»РёРЅР°: РєРёР»РѕРјРµС‚СЂС‹ в†’ РјРёР»Рё":
-        res = val * 0.621371;
-        break;
-      case "РњР°СЃСЃР°: РєРёР»РѕРіСЂР°РјРјС‹ в†’ С„СѓРЅС‚С‹":
-        res = val * 2.20462;
-        break;
-      case "РўРµРјРїРµСЂР°С‚СѓСЂР°: В°C в†’ В°F":
-        res = (val * 9 / 5) + 32;
-        break;
-    }
-
-    setState(() {
-      _result = res.toStringAsFixed(3);
-    });
-  }
+  final TextEditingController _inputController = TextEditingController();
+  int _categoryIndex = 0; // 0: Длина, 1: Масса, 2: Температура
 
   @override
   void dispose() {
-    _valController.dispose();
+    _inputController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            const Text(
-              "РљРѕРЅРІРµСЂС‚РµСЂ РІРµР»РёС‡РёРЅ",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+    final colors = Theme.of(context).colorScheme;
+    final val =
+        double.tryParse(_inputController.text.replaceAll(',', '.')) ?? 0.0;
+
+    String inputLabel;
+    String result1Title;
+    String result1Value;
+    String result2Title;
+    String result2Value;
+
+    if (_categoryIndex == 0) {
+      inputLabel = 'Значение в метрах (м)';
+      result1Title = 'Километры (км)';
+      result1Value = '${(val / 1000).toStringAsFixed(4)} км';
+      result2Title = 'Сантиметры (см)';
+      result2Value = '${(val * 100).toStringAsFixed(1)} см';
+    } else if (_categoryIndex == 1) {
+      inputLabel = 'Значение в килограммах (кг)';
+      result1Title = 'Граммы (г)';
+      result1Value = '${(val * 1000).toStringAsFixed(1)} г';
+      result2Title = 'Тонны (т)';
+      result2Value = '${(val / 1000).toStringAsFixed(4)} т';
+    } else {
+      inputLabel = 'Температура в Цельсиях (°C)';
+      result1Title = 'Фаренгейты (°F)';
+      result1Value = '${(val * 9 / 5 + 32).toStringAsFixed(2)} °F';
+      result2Title = 'Кельвины (K)';
+      result2Value = '${(val + 273.15).toStringAsFixed(2)} K';
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SegmentedButton<int>(
+            segments: const [
+              ButtonSegment(value: 0, label: Text('Длина')),
+              ButtonSegment(value: 1, label: Text('Масса')),
+              ButtonSegment(value: 2, label: Text('Градусы')),
+            ],
+            selected: {_categoryIndex},
+            onSelectionChanged: (selection) {
+              setState(() {
+                _categoryIndex = selection.first;
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _inputController,
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+              signed: true,
             ),
-            const SizedBox(height: 30),
-            DropdownButtonFormField<String>(
-              value: _conversionType,
-              isExpanded: true,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              dropdownColor: const Color(0xFF1E1E1E),
-              decoration: InputDecoration(
-                labelText: "РўРёРї РєРѕРЅРІРµСЂС‚Р°С†РёРё",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              items: _types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() => _conversionType = val);
-                  _convert();
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _valController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              decoration: InputDecoration(
-                labelText: "Р—РЅР°С‡РµРЅРёРµ РґР»СЏ РїРµСЂРµРІРѕРґР°",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onChanged: (_) => _convert(),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2C2F38),
+            decoration: InputDecoration(
+              labelText: inputLabel,
+              hintText: 'Введите число',
+              prefixIcon: const Icon(Icons.straighten),
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 20),
+          Card(
+            elevation: 0,
+            color: colors.surfaceContainerHighest,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 children: [
-                  const Text("Р РµР·СѓР»СЊС‚Р°С‚: ", style: TextStyle(color: Colors.white70, fontSize: 18)),
-                  Text(
-                    _result,
-                    style: const TextStyle(color: Color(0xFF5C8DFF), fontSize: 22, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(result1Title, style: const TextStyle(fontSize: 16)),
+                      Text(
+                        result1Value,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(result2Title, style: const TextStyle(fontSize: 16)),
+                      Text(
+                        result2Value,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
